@@ -31,3 +31,20 @@ class Yard:
                     if self.grid[x][y][z] and self.grid[x][y][z].id == container_id:
                         return (x, y, z)
         return None
+
+    def move_container(self, container_id, new_position):
+        container = self.containers.get(container_id)
+        if not container:
+            return False
+
+        current_position = self.get_container_position(container_id)
+        if not current_position:
+            return False
+
+        x, y, z = new_position
+        if self.grid[x][y][z] is not None:
+            return False
+
+        self.grid[current_position[0]][current_position[1]][current_position[2]] = None
+        self.grid[x][y][z] = container
+        return True

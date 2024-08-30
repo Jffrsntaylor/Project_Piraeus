@@ -3,15 +3,28 @@ import axios from 'axios';
 import Dashboard from './components/Dashboard';
 import ContainerGrid from './components/ContainerGrid';
 import MetricsDisplay from './components/MetricsDisplay';
+import LogDisplay from './components/LogDisplay';
+import TrainingProgress from './components/TrainingProgress';
 
 function App() {
   const [containers, setContainers] = useState([]);
   const [metrics, setMetrics] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [trainingProgress, setTrainingProgress] = useState({});
+  const [logsError, setLogsError] = useState(null);
+  const [trainingProgressError, setTrainingProgressError] = useState(null);
 
   useEffect(() => {
     fetchData();
+    fetchLogs();
+    fetchTrainingProgress();
+    const interval = setInterval(() => {
+      fetchLogs();
+      fetchTrainingProgress();
+    }, 5000); // Fetch logs and training progress every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   const fetchData = async () => {
@@ -71,6 +84,28 @@ function App() {
     }
   };
 
+  const fetchLogs = async () => {
+    try {
+      const response = await axios.get('/logs');
+      setLogs(response.data);
+      setLogsError(null);
+    } catch (error) {
+      console.error('Error fetching logs:', error);
+      setLogsError('Failed to fetch logs. Please try again later.');
+    }
+  };
+
+  const fetchTrainingProgress = async () => {
+    try {
+      const response = await axios.get('/training_progress');
+      setTrainingProgress(response.data);
+      setTrainingProgressError(null);
+    } catch (error) {
+      console.error('Error fetching training progress:', error);
+      setTrainingProgressError('Failed to fetch training progress. Please try again later.');
+    }
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -90,6 +125,8 @@ function App() {
           onManualPlace={manualPlaceContainer}
         />
         <MetricsDisplay metrics={metrics} />
+        <LogDisplay logs={logs} error={logsError} />
+        <TrainingProgress progress={trainingProgress} error={trainingProgressError} />
       </Dashboard>
     </div>
   );

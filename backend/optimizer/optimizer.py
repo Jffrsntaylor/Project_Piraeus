@@ -1,9 +1,11 @@
 import random
 import numpy as np
 from collections import deque
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, load_model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.optimizers import Adam
+from utils.logger import training_logger, optimization_logger
+import os
 
 class Optimizer:
     def __init__(self, yard):
@@ -17,6 +19,14 @@ class Optimizer:
         self.epsilon_decay = 0.995
         self.learning_rate = 0.001
         self.model = self._build_model()
+        self.model_path = os.path.join('backend', 'models', 'dqn_model.h5')
+        self._load_model()
+        self.training_progress = {
+            'episodes': 0,
+            'epsilon': self.epsilon,
+            'loss': 0,
+            'accuracy': 0
+        }
 
     def _build_model(self):
         model = Sequential()
@@ -25,6 +35,18 @@ class Optimizer:
         model.add(Dense(self.action_size, activation='linear'))
         model.compile(loss='mse', optimizer=Adam(lr=self.learning_rate))
         return model
+
+    def _load_model(self):
+        if os.path.exists(self.model_path):
+            self.model = load_model(self.model_path)
+            training_logger.info("Loaded existing model")
+        else:
+            training_logger.info("No existing model found, using new model")
+
+    def save_model(self):
+        os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
+        self.model.save(self.model_path)
+        training_logger.info("Model saved")
 
     def optimize_placement(self, container):
         state = self._get_state()
@@ -59,14 +81,17 @@ class Optimizer:
     def reoptimize(self):
         containers = list(self.yard.containers.values())
         random.shuffle(containers)
+        moves = 0
         for container in containers:
             current_pos = self.yard.get_container_position(container.id)
             self.yard.remove_container(container.id)
             new_pos = self.optimize_placement(container)
             if new_pos and new_pos != current_pos:
                 self.yard.add_container(container, new_pos)
+                moves += 1
             else:
                 self.yard.add_container(container, current_pos)
+        optimization_logger.info(f"Reoptimization complete. Containers moved: {moves}")
 
     def calculate_metrics(self):
         total_containers = len(self.yard.containers)
@@ -91,6 +116,7 @@ class Optimizer:
         if len(self.memory) < batch_size:
             return
         minibatch = random.sample(self.memory, batch_size)
+        losses = []
         for state, action, reward, next_state, done in minibatch:
             target = reward
             if not done:
@@ -98,6 +124,23 @@ class Optimizer:
                           np.amax(self.model.predict(next_state)[0]))
             target_f = self.model.predict(state)
             target_f[0][action] = target
-            self.model.fit(state, target_f, epochs=1, verbose=0)
+            history = self.model.fit(state, target_f, epochs=1, verbose=0)
+            losses.append(history.history['loss'][0])
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
+        
+        self.training_progress['episodes'] += 1
+        self.training_progress['epsilon'] = self.epsilon
+        self.training_progress['loss'] = np.mean(losses)
+        self.training_progress['accuracy'] = self.calculate_accuracy()
+
+        training_logger.info(f"Training complete. Epsilon: {self.epsilon}, Loss: {self.training_progress['loss']}, Accuracy: {self.training_progress['accuracy']}")
+        self.save_model()
+
+    def calculate_accuracy(self):
+        # Implement a method to calculate the accuracy of the model
+        # This is a placeholder implementation
+        return random.random()
+
+    def get_training_progress(self):
+        return self.training_progress
