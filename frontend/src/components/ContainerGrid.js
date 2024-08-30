@@ -28,8 +28,9 @@ const ContainerGrid = ({ containers, onRemoveContainer, onManualPlace }) => {
               key={`${x}-${y}-${z}`}
               className={`cell ${container ? 'occupied' : 'empty'} ${selectedContainer ? 'selectable' : ''}`}
               onClick={() => handleCellClick(x, y, z)}
+              title={container ? `Container ${container.id}` : `Empty (${x}, ${y}, ${z})`}
             >
-              {container && container.id}
+              {container && <div className="container-icon">{container.id}</div>}
             </div>
           );
         }
@@ -47,10 +48,14 @@ const ContainerGrid = ({ containers, onRemoveContainer, onManualPlace }) => {
       <div className="container-list">
         <h4>Container List</h4>
         {containers.map(container => (
-          <div key={container.id} className={`container-item ${selectedContainer === container ? 'selected' : ''}`}>
-            <span onClick={() => handleContainerClick(container)}>{container.id}</span>
-            <span>Position: ({container.position.x}, {container.position.y}, {container.position.z})</span>
-            <button onClick={() => onRemoveContainer(container.id)}>Remove</button>
+          <div
+            key={container.id}
+            className={`container-item ${selectedContainer === container ? 'selected' : ''}`}
+            onClick={() => handleContainerClick(container)}
+          >
+            <span className="container-id">{container.id}</span>
+            <span className="container-position">({container.position.x}, {container.position.y}, {container.position.z})</span>
+            <button onClick={(e) => { e.stopPropagation(); onRemoveContainer(container.id); }}>Remove</button>
           </div>
         ))}
       </div>

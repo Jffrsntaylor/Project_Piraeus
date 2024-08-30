@@ -8,10 +8,10 @@ const TrainingProgress = ({ progress, error }) => {
         <p className="error">{error}</p>
       ) : (
         <ul>
-          <li>Episodes: {progress.episodes}</li>
-          <li>Epsilon: {progress.epsilon?.toFixed(4)}</li>
-          <li>Loss: {progress.loss?.toFixed(4)}</li>
-          <li>Accuracy: {progress.accuracy?.toFixed(4)}</li>
+          <li><strong>Episodes:</strong> {progress.episodes}</li>
+          <li><strong>Epsilon:</strong> {progress.epsilon?.toFixed(4)}</li>
+          <li><strong>Loss:</strong> {progress.loss?.toFixed(4)}</li>
+          <li><strong>Accuracy:</strong> {progress.accuracy?.toFixed(4)}</li>
         </ul>
       )}
     </div>

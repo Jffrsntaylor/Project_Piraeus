@@ -5,6 +5,7 @@ import ContainerGrid from './components/ContainerGrid';
 import MetricsDisplay from './components/MetricsDisplay';
 import LogDisplay from './components/LogDisplay';
 import TrainingProgress from './components/TrainingProgress';
+import './App.css';
 
 function App() {
   const [containers, setContainers] = useState([]);
@@ -116,8 +117,13 @@ function App() {
 
   return (
     <div className="App">
-      <h1>Eco-Friendly Container Yard Management</h1>
-      <input type="file" accept=".csv" onChange={handleFileUpload} />
+      <header className="App-header">
+        <h1>Eco-Friendly Container Yard Management</h1>
+        <div className="file-upload">
+          <label htmlFor="csv-upload" className="file-upload-label">Upload CSV</label>
+          <input id="csv-upload" type="file" accept=".csv" onChange={handleFileUpload} />
+        </div>
+      </header>
       <Dashboard>
         <ContainerGrid
           containers={containers}
@@ -125,8 +131,8 @@ function App() {
           onManualPlace={manualPlaceContainer}
         />
         <MetricsDisplay metrics={metrics} />
-        <LogDisplay logs={logs} error={logsError} />
         <TrainingProgress progress={trainingProgress} error={trainingProgressError} />
+        <LogDisplay logs={logs} error={logsError} />
       </Dashboard>
     </div>
   );

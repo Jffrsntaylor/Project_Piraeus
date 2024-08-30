@@ -3,8 +3,10 @@ import React from 'react';
 const Dashboard = ({ children }) => {
   return (
     <div className="dashboard">
-      <h2>Container Yard Dashboard</h2>
-      {children}
+      <div className="dashboard-left">{children[0]}</div>
+      <div className="dashboard-right">
+        {children.slice(1)}
+      </div>
     </div>
   );
 };
