@@ -6,11 +6,15 @@ class Yard:
 
     def add_container(self, container, position):
         x, y, z = position
-        if self.grid[x][y][z] is None:
+        if self.grid[x][y][z] is None and self._check_weight_limit(x, y, z, container.weight):
             self.grid[x][y][z] = container
             self.containers[container.id] = container
             return True
         return False
+
+    def _check_weight_limit(self, x, y, z, container_weight):
+        stack_weight = sum(self.grid[x][y][i].weight for i in range(z) if self.grid[x][y][i] is not None)
+        return stack_weight + container_weight <= self.config.max_weight_per_stack
 
     def remove_container(self, container_id):
         if container_id in self.containers:
@@ -48,3 +52,13 @@ class Yard:
         self.grid[current_position[0]][current_position[1]][current_position[2]] = None
         self.grid[x][y][z] = container
         return True
+
+    def calculate_move_time(self, start_pos, end_pos):
+        x1, y1, z1 = start_pos
+        x2, y2, z2 = end_pos
+        distance = abs(x2 - x1) + abs(y2 - y1) + abs(z2 - z1)
+        return distance / self.config.crane_speed
+
+    def calculate_move_energy(self, start_pos, end_pos):
+        move_time = self.calculate_move_time(start_pos, end_pos)
+        return move_time * self.config.crane_energy_consumption

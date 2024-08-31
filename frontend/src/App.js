@@ -5,6 +5,8 @@ import ContainerGrid from './components/ContainerGrid';
 import MetricsDisplay from './components/MetricsDisplay';
 import LogDisplay from './components/LogDisplay';
 import TrainingProgress from './components/TrainingProgress';
+import LoadingSpinner from './components/LoadingSpinner';
+import ErrorToast from './components/ErrorToast';
 import './App.css';
 
 function App() {
@@ -16,6 +18,7 @@ function App() {
   const [trainingProgress, setTrainingProgress] = useState({});
   const [logsError, setLogsError] = useState(null);
   const [trainingProgressError, setTrainingProgressError] = useState(null);
+  const [showErrorToast, setShowErrorToast] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -107,21 +110,31 @@ function App() {
     }
   };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+  const handleRefresh = () => {
+    fetchData();
+    fetchLogs();
+    fetchTrainingProgress();
+  };
 
-  if (error) {
-    return <div>Error: {error}</div>;
+  const setErrorWithToast = (errorMessage) => {
+    setError(errorMessage);
+    setShowErrorToast(true);
+  };
+
+  if (loading) {
+    return <LoadingSpinner />;
   }
 
   return (
     <div className="App">
       <header className="App-header">
         <h1>Eco-Friendly Container Yard Management</h1>
-        <div className="file-upload">
-          <label htmlFor="csv-upload" className="file-upload-label">Upload CSV</label>
-          <input id="csv-upload" type="file" accept=".csv" onChange={handleFileUpload} />
+        <div className="header-actions">
+          <div className="file-upload">
+            <label htmlFor="csv-upload" className="file-upload-label">Upload CSV</label>
+            <input id="csv-upload" type="file" accept=".csv" onChange={handleFileUpload} />
+          </div>
+          <button className="refresh-button" onClick={handleRefresh}>Refresh Data</button>
         </div>
       </header>
       <Dashboard>
@@ -134,6 +147,12 @@ function App() {
         <TrainingProgress progress={trainingProgress} error={trainingProgressError} />
         <LogDisplay logs={logs} error={logsError} />
       </Dashboard>
+      {showErrorToast && (
+        <ErrorToast
+          message={error}
+          onClose={() => setShowErrorToast(false)}
+        />
+      )}
     </div>
   );
 }

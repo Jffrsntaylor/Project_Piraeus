@@ -56,11 +56,17 @@ class Optimizer:
         return self._action_to_position(np.argmax(act_values[0]))
 
     def _get_state(self):
-        state = np.zeros((self.yard.config.length, self.yard.config.width, self.yard.config.height))
+        state = np.zeros((self.yard.config.length, self.yard.config.width, self.yard.config.height, 4))
         for container in self.yard.containers.values():
             pos = self.yard.get_container_position(container.id)
             if pos:
-                state[pos[0]][pos[1]][pos[2]] = 1
+                x, y, z = pos
+                state[x][y][z] = [
+                    1,  # Container present
+                    container.weight / 1000,  # Normalized weight
+                    container.days_until_departure() / 30 if container.days_until_departure() is not None else 0,  # Normalized days until departure
+                    1 if container.is_overdue() else 0  # Overdue flag
+                ]
         return state.reshape(1, -1)
 
     def _random_action(self):
@@ -102,6 +108,11 @@ class Optimizer:
         money_saved = (total_moves - optimized_moves) * 10  # Assuming $10 saved per move reduced
         efficiency_increase = ((total_moves - optimized_moves) / total_moves) * 100 if total_moves > 0 else 0
         carbon_reduction = (total_moves - optimized_moves) * 5  # Assuming 5 kg CO2 saved per move reduced
+        energy_consumption = total_moves * self.yard.config.energy_consumption_rate
+        carbon_emissions = energy_consumption * self.yard.config.carbon_emission_factor
+
+        overdue_containers = sum(1 for container in self.yard.containers.values() if container.is_overdue())
+        avg_days_until_departure = np.mean([container.days_until_departure() for container in self.yard.containers.values() if container.days_until_departure() is not None])
 
         return {
             "total_containers": total_containers,
@@ -109,7 +120,11 @@ class Optimizer:
             "optimized_moves": optimized_moves,
             "money_saved": money_saved,
             "efficiency_increase": efficiency_increase,
-            "carbon_reduction": carbon_reduction
+            "carbon_reduction": carbon_reduction,
+            "energy_consumption": energy_consumption,
+            "carbon_emissions": carbon_emissions,
+            "overdue_containers": overdue_containers,
+            "avg_days_until_departure": avg_days_until_departure
         }
 
     def train(self, batch_size):
@@ -138,9 +153,23 @@ class Optimizer:
         self.save_model()
 
     def calculate_accuracy(self):
-        # Implement a method to calculate the accuracy of the model
+        # Implement a more realistic accuracy calculation
+        correct_predictions = 0
+        total_predictions = 100  # Number of test cases
+
+        for _ in range(total_predictions):
+            state = self._get_state()
+            predicted_action = np.argmax(self.model.predict(state)[0])
+            optimal_action = self._get_optimal_action(state)
+            if predicted_action == optimal_action:
+                correct_predictions += 1
+
+        return correct_predictions / total_predictions
+
+    def _get_optimal_action(self, state):
+        # Implement a simple heuristic to determine the optimal action
         # This is a placeholder implementation
-        return random.random()
+        return random.randint(0, self.action_size - 1)
 
     def get_training_progress(self):
         return self.training_progress
