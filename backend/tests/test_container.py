@@ -1,7 +1,6 @@
 import unittest
 from datetime import datetime, timedelta
 from backend.models.container import Container
-from backend.models.container import Container
 from backend.models.yard import Yard
 from backend.models.yard_config import YardConfig
 from backend.optimizer.optimizer import Optimizer
